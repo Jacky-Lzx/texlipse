@@ -39,6 +39,7 @@ import org.eclipse.texlipse.texparser.LatexParserUtils;
 public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     
     private String indentationString = "";
+    /** Indentation items which can be edited in Preference-Texlipse-Editor-Indentation*/
     private String[] indentationItems;
     private int lineLength;
     private static boolean hardWrap = false;
@@ -93,6 +94,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
             indentationString = "\t";
         } else {
         	int indentationLevel = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.INDENTATION_LEVEL);
+        	//TODO: Efficient?
         	for (int i = 0; i < indentationLevel; i++) {
                 indentationString += " ";
             }
@@ -141,7 +143,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
                         TexEditor.TEX_PARTITIONING, command.offset, true);
                 // Do not wrap in verbatim partitions
                 if (!FastLaTeXPartitionScanner.TEX_VERBATIM.equals(contentType)) {
-                    hlw.doWrapB(document, command, lineLength);
+                    hlw.doWrapD(document, command, lineLength);
                 }
             }
             catch (Exception e) {
@@ -266,6 +268,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
                 command.text = buf.toString();
                 
             } else {
+//            	System.out.println(itemInserted(document, command));
                 if (autoItem && !itemInserted(document, command)) {
                     super.customizeDocumentCommand(document, command);
                 } else {
@@ -326,9 +329,6 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     
     /**
      * Erases the \item -string from a line
-     * 
-     * @param d
-     * @param c
      */
     private void dropItem(IDocument d, DocumentCommand c) {
         try {
@@ -350,50 +350,61 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     }
     
     /**
-     * Inserts an \item or an \item[] string. Works ONLY it \item is found at
+     * Inserts an \item or an \item[] string. Works ONLY if \item is found at
      * the beginning of a preceeding line
      * 
      * @param d
      * @param c
      * @return <code>true</code> if item was inserted, <code>false</code>
      *         otherwise
+     *         
+     *TODO: Bug: If having inserted /item after an enter, and then input enter again, no /item will be inserted.
+     *@author lzx
      */
     private boolean itemInserted(IDocument d, DocumentCommand c) {
         itemSetted = false;
         try {
+        	//lineNr starts from 0
             int lineNr = d.getLineOfOffset(c.offset);
             int lineEnd = d.getLineOffset(lineNr) + d.getLineLength(lineNr);
+            /*System.out.println("lineNr:" + lineNr);
+            System.out.println("lineEnd:" + lineEnd);
+            System.out.println("c.offset:" + c.offset);*/
             //Test if there is no text behind the cursor in the line
             if (c.offset < lineEnd - 1) return false;
-            int currentLineNr = lineNr;
             
+            int currentLineNr = lineNr;
             String indentation = null;
-            while (lineNr >= 0) {
-            	IRegion r = d.getLineInformation(lineNr);
-            	String prevLine = d.get(r.getOffset(), r.getLength());
-            	if (indentation == null) indentation = getIndentation(prevLine);
-            	
-                if (prevLine.trim().startsWith("\\item")) {
-                    StringBuilder buf = new StringBuilder(c.text);
-                    buf.append(indentation);
-                    if (prevLine.trim().startsWith("\\item[")) {
-                    	c.shiftsCaret = false;
-                    	c.caretOffset = c.offset
-                    	+ buf.length() + 5
-                    	+ c.text.length();
-                    	buf.append("\\item[]");
-                    } else {
-                    	buf.append("\\item ");
-                    }
-                    itemSetted = true;
-                    itemAtLine = currentLineNr;
-                    c.text = buf.toString();
-                    return true;
-                }
-                if (prevLine.trim().startsWith("\\begin") || prevLine.trim().startsWith("\\end"))
-                    return false;
-                lineNr--;
-            }
+			while (lineNr >= 0)
+			{
+				IRegion r = d.getLineInformation(lineNr);
+				String prevLine = d.get(r.getOffset(), r.getLength());
+//				System.out.println(prevLine);
+				if (indentation == null)
+					indentation = getIndentation(prevLine);
+
+				if (prevLine.trim().startsWith("\\item"))
+				{
+					StringBuilder buf = new StringBuilder(c.text);
+					buf.append(indentation);
+					if (prevLine.trim().startsWith("\\item["))
+					{
+						c.shiftsCaret = false;
+						c.caretOffset = c.offset + buf.length() + 5 + c.text.length();
+						buf.append("\\item[]");
+					} else
+					{
+						buf.append("\\item ");
+					}
+					itemSetted = true;
+					itemAtLine = currentLineNr;
+					c.text = buf.toString();
+					return true;
+				}
+				if (prevLine.trim().startsWith("\\begin") || prevLine.trim().startsWith("\\end"))
+					return false;
+				lineNr--;
+			}
         } catch (BadLocationException e) {
         	//Ignore
         }

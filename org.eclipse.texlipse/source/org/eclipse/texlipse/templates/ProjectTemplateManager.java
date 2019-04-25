@@ -228,6 +228,7 @@ public class ProjectTemplateManager {
         if (!dir.exists()) {
             dir.mkdir();
         }
+//        System.out.println(dir.toString());
         
         // check extension
         int index = templateName.lastIndexOf('.');

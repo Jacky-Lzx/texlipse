@@ -35,16 +35,18 @@ public class TexlipseProjectAttributes {
     private String languageCode;
 
     /**
-     * 
+     * Edited: Change sourceFile and outputFile's names to the same as the projectName
      */
     public TexlipseProjectAttributes() {
         projectName = "";
         outputDir = "";
         sourceDir = "";
         tempDir = "tmp";
-        sourceFile = "document.tex";
+//        sourceFile = "document.tex";
+        sourceFile = "";
         outputFormat = TexlipsePlugin.getPreference(TexlipseProperties.OUTPUT_FORMAT);
-        outputFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')+1) + outputFormat;
+//        outputFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')+1) + outputFormat;
+        outputFile = "";
         template = "";
         languageCode = "en";
         builder = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.BUILDER_NUMBER);
@@ -65,9 +67,13 @@ public class TexlipseProjectAttributes {
     public String getProjectName() {
         return projectName;
     }
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
+
+	public void setProjectName(String projectName)
+	{
+		sourceFile = projectName + ".tex";
+		outputFile = projectName+ '.' + outputFormat;
+		this.projectName = projectName;
+	}
     public String getSourceDir() {
         return sourceDir;
     }

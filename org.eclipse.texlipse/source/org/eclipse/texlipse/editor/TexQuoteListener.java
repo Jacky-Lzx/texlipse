@@ -33,13 +33,13 @@ public class TexQuoteListener implements IDocumentListener {
     private ITextEditor editor;
     private IDocument document;
     
-    private static HashMap quotes;
+    private static HashMap<String, String> quotes;
     
     public TexQuoteListener(ITextEditor editor) {
         this.editor = editor;
         this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         if (quotes == null) {
-            quotes = new HashMap();
+            quotes = new HashMap<String, String>();
             quotes.put("eno", "``");
             quotes.put("enc", "''");
             quotes.put("fio", "''");

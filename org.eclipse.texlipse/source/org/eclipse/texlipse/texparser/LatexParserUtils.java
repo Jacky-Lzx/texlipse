@@ -226,7 +226,7 @@ public class LatexParserUtils {
      * @return null if it could not find any command
      * @throws BadLocationException
      */
-    public static IRegion getCommand (String input, int index){
+    public static IRegion getCommand(String input, int index){
         if ("".equals(input)) return null;
 
         int pos = index;

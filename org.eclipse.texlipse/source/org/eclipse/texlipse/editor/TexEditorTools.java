@@ -82,8 +82,7 @@ public class TexEditorTools {
 	}
 
 	/**
-	 * Returns the indentation of the given string. If the 
-	 * indentation contains tabular characters they are 
+	 * Returns the indentation of the given string. If the indentation contains tabular characters they are 
 	 * converted to the spaces.
 	 * @param text 		source where to find the indentation
 	 * @param tabWidth 	how many spaces one tabular character is
@@ -302,25 +301,23 @@ public class TexEditorTools {
 	 * @param lineDif 	0 = current line, 1 = next line, -1 previous line etc...
 	 * @return 			the text of the line. 
 	 */
-	public String getStringAt(IDocument document, 
-			DocumentCommand command, boolean delim, int lineDif) {
+	public String getStringAt(IDocument document, DocumentCommand command, boolean delim, int lineDif)
+	{
 		String line = "";
-        int lineBegin, lineLength;
-        try {
-            if (delim) {
-                lineLength = getLineLength(document, command, true, lineDif);
-            } else {
-                lineLength = getLineLength(document, command, false, lineDif);
-            }
-            if (lineLength > 0) {
-                lineBegin = document.getLineOffset(document
-                        .getLineOfOffset(command.offset) + lineDif);
-                line = document.get(lineBegin, lineLength);
-            }
-        } catch (BadLocationException e) {
-            TexlipsePlugin.log("TexEditorTools.getStringAt", e);
-        }
-        return line;
+		int lineBegin, lineLength;
+		try
+		{
+			lineLength = getLineLength(document, command, delim, lineDif);
+			if (lineLength > 0)
+			{
+				lineBegin = document.getLineOffset(document.getLineOfOffset(command.offset) + lineDif);
+				line = document.get(lineBegin, lineLength);
+			}
+		} catch (BadLocationException e)
+		{
+			TexlipsePlugin.log("TexEditorTools.getStringAt", e);
+		}
+		return line;
 	}
 
     /**
@@ -473,7 +470,7 @@ public class TexEditorTools {
             }
             p++;
         }
-        return -1; // not found
+        return -1;
     }
     
     

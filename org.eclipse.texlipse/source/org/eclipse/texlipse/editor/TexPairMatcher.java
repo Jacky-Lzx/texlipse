@@ -10,13 +10,13 @@
  *******************************************************************************/
 package org.eclipse.texlipse.editor;
 
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.ICharacterPairMatcher;
 import org.eclipse.texlipse.TexlipsePlugin;
 import org.eclipse.texlipse.texparser.LatexParserUtils;
-import org.eclipse.jface.text.BadLocationException;
 
 
 /**

@@ -77,12 +77,18 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
      * Called when this page is made visible.
      * This method updates the project name and output format to the
      * directory tree component.
+     * 
+     * Edited: updates the main file name also.
+     * @author lzx
      */
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         projectDirItem.setText(attributes.getProjectName());
         outputFileNameField.setText(attributes.getOutputFile());
         outputFileItem.setText(attributes.getOutputFile());
+        sourceFileNameField.setText(attributes.getSourceFile());
+        sourceFileItem.setText(attributes.getSourceFile());
+        
     }
 
     /**
@@ -120,7 +126,7 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
     private void createTreeControl(Composite parent) {
 
         dirTree = new Tree(parent, SWT.SINGLE | SWT.BORDER);
-        dirTree.setToolTipText(TexlipsePlugin.getResourceString("projectWizardDirTreeTooltip"));
+//        dirTree.setToolTipText(TexlipsePlugin.getResourceString("projectWizardDirTreeTooltip"));
         dirTree.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL));
 
         recreateSubTree();
@@ -189,7 +195,7 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
         // add label
         Label mainLabel = new Label(composite, SWT.LEFT);
         mainLabel.setText(TexlipsePlugin.getResourceString("projectWizardOutputDirLabel"));
-        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputDirTooltip"));
+//        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputDirTooltip"));
         mainLabel.setLayoutData(new GridData());
         
         // add text field
@@ -230,13 +236,13 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
         // add label
         Label mainLabel = new Label(composite, SWT.LEFT);
         mainLabel.setText(TexlipsePlugin.getResourceString("projectWizardOutputFileLabel"));
-        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputFileTooltip"));
+//        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputFileTooltip"));
         mainLabel.setLayoutData(new GridData());
         
         // add text field
         outputFileNameField = new Text(composite, SWT.SINGLE | SWT.BORDER);
         outputFileNameField.setText(attributes.getOutputFile());
-        outputFileNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputFileTooltip"));
+//        outputFileNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardOutputFileTooltip"));
         outputFileNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         outputFileNameField.addFocusListener(new FocusAdapter() {
             public void focusGained(FocusEvent event) {
@@ -261,7 +267,7 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
         // add label
         Label mainLabel = new Label(composite, SWT.LEFT);
         mainLabel.setText(TexlipsePlugin.getResourceString("projectWizardMainDirLabel"));
-        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainDirTooltip"));
+//        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainDirTooltip"));
         mainLabel.setLayoutData(new GridData());
         
         // add text field
@@ -302,17 +308,17 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
         // add label
         Label mainLabel = new Label(composite, SWT.LEFT);
         mainLabel.setText(TexlipsePlugin.getResourceString("projectWizardMainFileLabel"));
-        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainFileTooltip"));
+//        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainFileTooltip"));
         mainLabel.setLayoutData(new GridData());
         
         // add text field
         sourceFileNameField = new Text(composite, SWT.SINGLE | SWT.BORDER);
         sourceFileNameField.setText(attributes.getSourceFile());
-        sourceFileNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainFileTooltip"));
+//        sourceFileNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardMainFileTooltip"));
         sourceFileNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         sourceFileNameField.addFocusListener(new FocusAdapter() {
             public void focusGained(FocusEvent event) {
-                dirTree.setSelection(new TreeItem[] { sourceFileItem });
+				dirTree.setSelection(new TreeItem[] { sourceFileItem });
             }});
         sourceFileNameField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -334,7 +340,7 @@ public class TexlipseProjectFilesWizardPage extends TexlipseWizardPage {
         // add label
         Label mainLabel = new Label(composite, SWT.LEFT);
         mainLabel.setText(TexlipsePlugin.getResourceString("projectWizardTempDirLabel"));
-        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTempDirTooltip"));
+//        mainLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTempDirTooltip"));
         mainLabel.setLayoutData(new GridData());
         
         // add text field

@@ -71,7 +71,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
 	private List templateList;
 
 	// template type (system/user)
-	private Label typeLabel;
+//	private Label typeLabel;
 
     // output format / build order chooser
     private BuilderChooser outputChooser;
@@ -110,27 +110,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
     	updateEntries();
     }
 
-    /**
-     * @param parent parent component
-     */
-    private void createOutputFormatControl(Composite parent) {
-        outputChooser = new BuilderChooser(parent);
-        GridData ngd = new GridData(GridData.FILL_HORIZONTAL);
-        ngd.horizontalSpan = 2;
-        outputChooser.getControl().setLayoutData(ngd);
-        outputChooser.setSelectedBuilder(TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.BUILDER_NUMBER));
-        String o = attributes.getOutputFile();
-        attributes.setOutputFile(o.substring(0, o.lastIndexOf('.')+1) + outputChooser.getSelectedFormat());
-        attributes.setOutputFormat(outputChooser.getSelectedFormat());
-        outputChooser.addSelectionListener(new SelectionAdapter() {
-            public void widgetSelected(SelectionEvent event) {
-                String o = attributes.getOutputFile();
-                attributes.setOutputFile(o.substring(0, o.lastIndexOf('.')+1) + outputChooser.getSelectedFormat());
-                attributes.setOutputFormat(outputChooser.getSelectedFormat());
-                attributes.setBuilder(outputChooser.getSelectedBuilder());
-            }});
-    }
-
+    
     /**
      * Create project name settings box.
      * @param composite the parent container
@@ -151,7 +131,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         // add text field
         projectNameField = new Text(c, SWT.SINGLE | SWT.BORDER);
         projectNameField.setText(attributes.getProjectName());
-        projectNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardNameTooltip"));
+//        projectNameField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardNameTooltip"));
         projectNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         projectNameField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
@@ -173,7 +153,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         // add text field
         languageField = new Text(c, SWT.SINGLE | SWT.BORDER);
         languageField.setText(attributes.getLanguageCode());
-        languageField.setToolTipText(TexlipsePlugin.getResourceString("propertiesLanguageDescription"));
+//        languageField.setToolTipText(TexlipsePlugin.getResourceString("propertiesLanguageDescription"));
         languageField.setLayoutData(new GridData());     
         new AutoCompleteField(languageField, new TextContentAdapter(), Locale.getISOLanguages());
         languageField.setTextLimit(2);
@@ -290,6 +270,27 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
     }
 
     /**
+     * @param parent parent component
+     */
+    private void createOutputFormatControl(Composite parent) {
+        outputChooser = new BuilderChooser(parent);
+        GridData ngd = new GridData(GridData.FILL_HORIZONTAL);
+        ngd.horizontalSpan = 2;
+        outputChooser.getControl().setLayoutData(ngd);
+        outputChooser.setSelectedBuilder(TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.BUILDER_NUMBER));
+        String o = attributes.getOutputFile();
+        attributes.setOutputFile(o.substring(0, o.lastIndexOf('.')+1) + outputChooser.getSelectedFormat());
+        attributes.setOutputFormat(outputChooser.getSelectedFormat());
+        outputChooser.addSelectionListener(new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent event) {
+                String o = attributes.getOutputFile();
+                attributes.setOutputFile(o.substring(0, o.lastIndexOf('.')+1) + outputChooser.getSelectedFormat());
+                attributes.setOutputFormat(outputChooser.getSelectedFormat());
+                attributes.setBuilder(outputChooser.getSelectedBuilder());
+            }});
+    }
+    
+    /**
      * Check if the external project location is valid.
      * This method updates the status message for the project location.
      * @param text the path to project location
@@ -318,7 +319,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         // add label for the list of templates
         Label label = new Label(composite, SWT.LEFT);
         label.setText(TexlipsePlugin.getResourceString("projectWizardTemplateListLabel"));
-        label.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateListTooltip"));
+//        label.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateListTooltip"));
         label.setLayoutData(new GridData());
     	
         // add composite containing a label for the description area and templatetype (system/user) label
@@ -333,10 +334,10 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
     	l.setLayoutData(new GridData());
 
         // add label for presenting the type of the selected template
-    	typeLabel = new Label(c, SWT.RIGHT);
+//    	typeLabel = new Label(c, SWT.RIGHT);
     	//Note that thetext of this label is set by updateEntries()
-    	typeLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateTypeTooltip"));
-        typeLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//    	typeLabel.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateTypeTooltip"));
+//        typeLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     }
     
     
@@ -351,7 +352,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         templateList = new List(composite, SWT.SINGLE | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		templateList.setItems(ProjectTemplateManager.loadTemplateNames());
         templateList.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-        templateList.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateTooltip"));
+//        templateList.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateTooltip"));
         templateList.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
             	attributes.setTemplate(templateList.getSelection()[0]);
@@ -365,7 +366,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         
         // add TextField for the selected template's description
         descriptionField = new Text(composite, SWT.MULTI | SWT.BORDER);
-        descriptionField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateDescriptionTooltip"));
+//        descriptionField.setToolTipText(TexlipsePlugin.getResourceString("projectWizardTemplateDescriptionTooltip"));
         descriptionField.setLayoutData(new GridData(GridData.FILL_BOTH));
         descriptionField.setEditable(false);
     }
@@ -375,7 +376,7 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
      * 
      */
     private void updateEntries(){
-    	typeLabel.setText(templateType(attributes.getTemplate()));
+//    	typeLabel.setText(templateType(attributes.getTemplate()));
     	readProjectTemplateDescription(attributes.getTemplate());
     }
 
@@ -388,11 +389,11 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
      *   wether the given template is found in plugins templates directory (former if not,
      *   latter if yes).
      */
-    private String templateType(String template){
+    /*private String templateType(String template){
     	URL templateUrl = TexlipsePlugin.getDefault().getBundle().getEntry("templates" + File.separator + template + ".tex");
     	if(templateUrl==null) return "User defined template";
     	else return "System template";
-    }
+    }*/
 
     /**
      * Starts to read the given template (assuming it is found
@@ -457,10 +458,10 @@ public class TexlipseProjectCreationWizardPage extends TexlipseWizardPage {
         IStatus status = workspace.validateName(text, IResource.PROJECT);
         
         if (status.isOK()) {
-            if (workspace.getRoot().getProject(text).exists()) {
-                status = createStatus(IStatus.ERROR,
-                        TexlipsePlugin.getResourceString("projectWizardNameError"));
-            }
+			if (workspace.getRoot().getProject(text).exists())
+			{
+				status = createStatus(IStatus.ERROR, TexlipsePlugin.getResourceString("projectWizardNameError"));
+			}
             attributes.setProjectName(text);
         }
 

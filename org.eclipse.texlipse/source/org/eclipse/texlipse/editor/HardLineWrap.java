@@ -664,6 +664,10 @@ public class HardLineWrap {
 					lineDif++;
 					newLineBuf.append(' ' + nextLine.trim());
 					c.length += nextLine.length();
+					if (trimBeginPlusComment(nextLine).indexOf("%") > 0)
+					{
+						break;
+					}
 					nextLine = tools.getStringAt(d, c, false, lineDif);
 				}
 			}

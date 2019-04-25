@@ -688,11 +688,11 @@ public class HardLineWrap {
 			if (!isLastLine)
 			{
 				c.length += delim.length() * lineDif;
-				c.length -= 1;
+				c.length -= 2;
 			}
 			
 			if (cursorOnLine >= breakpos[0])
-				c.caretOffset += tools.getIndentation(line).length();
+				c.caretOffset += tools.getIndentation(line).length() + 1 + (isCommentLine ? 2: 0);
 			c.text = newLineBuf.toString();
 			
 		}

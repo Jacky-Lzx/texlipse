@@ -98,7 +98,7 @@ public class TexEditorTools {
 		
 		if (array[0] == ' ' || array[0] == '\t'){
 			int tabs = numberOfTabs(text);		
-			int spaces = numberOfSpaces(text) - tabs + (tabs * tabWidth);
+			int spaces = numberOfSpaces(text) /*- tabs*/ + (tabs * tabWidth);
 			if (spaces > 0) {
 				for (int i = 0; i < spaces; i++) {
 					indentation += " ";

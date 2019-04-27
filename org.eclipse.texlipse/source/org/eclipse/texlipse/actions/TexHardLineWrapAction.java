@@ -19,12 +19,12 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.texlipse.TexlipsePlugin;
+import org.eclipse.texlipse.editor.HardLineWrapTools;
 import org.eclipse.texlipse.editor.TexEditor;
 import org.eclipse.texlipse.editor.TexEditorTools;
 import org.eclipse.texlipse.properties.TexlipseProperties;
 import org.eclipse.ui.IEditorActionDelegate;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 
@@ -37,8 +37,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 public class TexHardLineWrapAction implements IEditorActionDelegate {
     private IEditorPart targetEditor;
     private int tabWidth = 2;
-    private int lineLength = 80;
+    private int MAX_LENGTH = 80;
     private TexEditorTools tools;
+    private HardLineWrapTools hlwTools;
     //private static TexSelections selection;
     
     private static Set environmentsToProcess = new HashSet();
@@ -50,6 +51,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     
     public TexHardLineWrapAction() {
         this.tools = new TexEditorTools();
+        this.hlwTools = new HardLineWrapTools();
     }
 
 
@@ -71,8 +73,9 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
      * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
      */
     public void run(IAction action) {
-        this.lineLength = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.WORDWRAP_LENGTH);
-        this.tabWidth = TexlipsePlugin.getDefault().getPreferenceStore().getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
+        this.MAX_LENGTH = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.WORDWRAP_LENGTH);
+        //FIXME tabwidth be setted to 0
+//        this.tabWidth = TexlipsePlugin.getDefault().getPreferenceStore().getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
         TexSelections selection = new TexSelections(getTexEditor());
         try {
             doWrapB(selection);
@@ -176,15 +179,15 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
             while (selectedLine.length() > 0) {				
                 /* find the last white space before MAX */  
                 wsLast = tools.getLastWSPosition(selectedLine, 
-                        (lineLength - correctIndentation.length())) + 1;
+                        (MAX_LENGTH - correctIndentation.length())) + 1;
                 if (wsLast == 0) {
                     /* there was no white space before MAX, try if there is 
                      one after */
                     wsLast = tools.getFirstWSPosition(selectedLine, 
-                            (lineLength - correctIndentation.length())) + 1;
+                            (MAX_LENGTH - correctIndentation.length())) + 1;
                 }
                 if (wsLast == 0 || wsLast > selectedLine.length() || 
-                        selectedLine.length() < (lineLength - correctIndentation.length())){
+                        selectedLine.length() < (MAX_LENGTH - correctIndentation.length())){
                     //there was no white space character at the line 
                     wsLast = selectedLine.length();
                 } 
@@ -227,98 +230,331 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     
     // testing
     
-    private void doWrapB(TexSelections selection) throws BadLocationException {
-        selection.selectParagraph();
-        String delimiter = tools.getLineDelimiter(selection.getDocument());
-        IDocument document = selection.getDocument();
-        // FIXME complete selection just returns the current line
-        //String[] lines = selection.getCompleteSelection().split(delimiter);
-        String[] lines = document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()).split(delimiter);
-        if (lines.length == 0) {
-            return;
-        }
-        // FIXME doc.get
-        String endNewlines = tools.getNewlinesAtEnd(document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()),
-                delimiter);
-        
-        StringBuffer newText = new StringBuffer();
-        TextWrapper wrapper = new TextWrapper(tools, delimiter);
-        
-        boolean inEnvironment = false;
-        String environment = "";
-        
-        String indentation = "";
-        String newIndentation;
-        
-        for (int index = 0; index < lines.length; index++) {
-            String trimmedLine = lines[index].trim(); 
+	private void doWrapB(TexSelections selection) throws BadLocationException
+	{
+		selection.selectParagraph();
 
-            if (tools.isLineCommandLine(trimmedLine) || inEnvironment) {
-                // command lines or environments -> don't wrap them
-                
-                newText.append(wrapper.loadWrapped(indentation));
-                newText.append(lines[index]);
-                newText.append(delimiter);
-                
-                // TODO this will not find a match in case begins and ends
-                // are scattered on one line
-                String[] command = tools.getEnvCommandArg(trimmedLine);
-                if (!environmentsToProcess.contains(command[1])) {
-                    if ("begin".equals(command[0]) && !inEnvironment) {
-                        inEnvironment = true;
-                        environment = command[1];
-                    } else if ("end".equals(command[0])
-                            && inEnvironment
-                            && environment.equals(command[0])) {
-                        inEnvironment = false;
-                        environment = "";
-                    }
-                }
-            } else if (trimmedLine.length() == 0){ 
-                // empty lines -> don't wrap them
-                
-                newText.append(wrapper.loadWrapped(indentation));
-                newText.append(lines[index]);
-                newText.append(delimiter);
-            } else {
-                // normal paragraphs -> buffer and wrap
-                
-                if (tools.isLineCommentLine(trimmedLine)) {
-                    newIndentation = tools.getIndentationWithComment(lines[index]);
-                    trimmedLine = trimmedLine.substring(1).trim(); // FIXME remove all % signs
-                } else {
-                    newIndentation = tools.getIndentation(lines[index], tabWidth);
-                }
-                if (!indentation.equals(newIndentation)) {
-                    newText.append(wrapper.loadWrapped(indentation));
-                }
-                indentation = newIndentation;
-                wrapper.storeUnwrapped(trimmedLine);
-                
-                if (trimmedLine.endsWith("\\\\")
-                        || trimmedLine.endsWith(".")
-                        || trimmedLine.endsWith(":")) {
-                    // On forced breaks, end of sentence or enumerations keep existing breaks
-                    newText.append(wrapper.loadWrapped(indentation));
-                }
-            }
-        }
-        // empty the buffer
-        newText.append(wrapper.loadWrapped(indentation));
+		String delimiter = tools.getLineDelimiter(selection.getDocument());
+		IDocument document = selection.getDocument();
+		// FIXME complete selection just returns the current line
+		// String[] lines = selection.getCompleteSelection().split(delimiter);
+		String[] lines = document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()).split(delimiter);
+		if (lines.length == 0)
+			return;
+		
+		// FIXME doc.get
+		String endNewlines = tools.getNewlinesAtEnd(document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()), delimiter);
 
-        // put old delims here
-        newText.delete(newText.length() - delimiter.length(), newText.length());
-        newText.append(endNewlines);
-        
+		TextWrapper wrapper = new TextWrapper(tools, delimiter);
+
+		boolean inEnvironment = false;
+		String environment = "";
+
+		String indentation = "";
+		String newIndentation;
+
+		StringBuffer newText = new StringBuffer();
+		for (int index = 0; index < lines.length; index++)
+		{
+			String trimmedLine = lines[index].trim();
+
+			if (tools.isLineCommandLine(trimmedLine) || inEnvironment)
+			{
+				// command lines or environments -> don't wrap them
+
+				newText.append(wrapper.loadWrapped(indentation));
+				newText.append(lines[index]);
+				newText.append(delimiter);
+
+				// TODO this will not find a match in case begins and ends
+				// are scattered on one line
+				String[] command = tools.getEnvCommandArg(trimmedLine);
+				if (!environmentsToProcess.contains(command[1]))
+				{
+					if ("begin".equals(command[0]) && !inEnvironment)
+					{
+						inEnvironment = true;
+						environment = command[1];
+					} else if ("end".equals(command[0]) && inEnvironment && environment.equals(command[0]))
+					{
+						inEnvironment = false;
+						environment = "";
+					}
+				}
+			} 
+			else if (trimmedLine.length() == 0)
+			{
+				// empty lines -> don't wrap them
+
+				newText.append(wrapper.loadWrapped(indentation));
+				newText.append(lines[index]);
+				newText.append(delimiter);
+			} 
+			else
+			{
+				// normal paragraphs -> buffer and wrap
+
+				if (tools.isLineCommentLine(trimmedLine))
+				{
+					newIndentation = tools.getIndentationWithComment(lines[index]);
+					trimmedLine = trimmedLine.substring(1).trim(); // FIXME remove all % signs
+				} else
+				{
+					newIndentation = tools.getIndentation(lines[index], tabWidth);
+				}
+				if (!indentation.equals(newIndentation))
+				{
+					newText.append(wrapper.loadWrapped(indentation));
+				}
+				indentation = newIndentation;
+				wrapper.storeUnwrapped(trimmedLine);
+
+				if (trimmedLine.endsWith("\\\\") || trimmedLine.endsWith(".") || trimmedLine.endsWith(":"))
+				{
+					// On forced breaks, end of sentence or enumerations keep existing breaks
+					newText.append(wrapper.loadWrapped(indentation));
+				}
+			}
+		}
+		// empty the buffer
+		newText.append(wrapper.loadWrapped(indentation));
+
+		// put old delims here
+		newText.delete(newText.length() - delimiter.length(), newText.length());
+		newText.append(endNewlines);
+
 //        selection.getDocument().replace(selection.getTextSelection().getOffset(),
 //                selection.getSelLength(),
 //                newText.toString());
-        
-        document.replace(document.getLineOffset(selection.getStartLineIndex()),
-                selection.getSelLength(),
-                newText.toString());
+
+		document.replace(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength(), newText.toString());
+	}
+/*    private void doWrapB(TexSelections selection) throws BadLocationException {
+    	selection.selectParagraph();
+    	String delimiter = tools.getLineDelimiter(selection.getDocument());
+    	IDocument document = selection.getDocument();
+    	// FIXME complete selection just returns the current line
+    	//String[] lines = selection.getCompleteSelection().split(delimiter);
+    	String[] lines = document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()).split(delimiter);
+    	if (lines.length == 0) {
+    		return;
+    	}
+    	// FIXME doc.get
+    	String endNewlines = tools.getNewlinesAtEnd(document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()), delimiter);
+    	
+    	TextWrapper wrapper = new TextWrapper(tools, delimiter);
+    	
+    	boolean inEnvironment = false;
+    	String environment = "";
+    	
+    	String indentation = "";
+    	String newIndentation;
+    	
+    	StringBuffer newText = new StringBuffer();
+    	for (int index = 0; index < lines.length; index++) {
+    		String trimmedLine = lines[index].trim(); 
+    		
+    		if (tools.isLineCommandLine(trimmedLine) || inEnvironment) {
+    			// command lines or environments -> don't wrap them
+    			
+    			newText.append(wrapper.loadWrapped(indentation));
+    			newText.append(lines[index]);
+    			newText.append(delimiter);
+    			
+    			// TODO this will not find a match in case begins and ends
+    			// are scattered on one line
+    			String[] command = tools.getEnvCommandArg(trimmedLine);
+    			if (!environmentsToProcess.contains(command[1])) {
+    				if ("begin".equals(command[0]) && !inEnvironment) {
+    					inEnvironment = true;
+    					environment = command[1];
+    				} else if ("end".equals(command[0])
+    						&& inEnvironment
+    						&& environment.equals(command[0])) {
+    					inEnvironment = false;
+    					environment = "";
+    				}
+    			}
+    		} else if (trimmedLine.length() == 0){ 
+    			// empty lines -> don't wrap them
+    			
+    			newText.append(wrapper.loadWrapped(indentation));
+    			newText.append(lines[index]);
+    			newText.append(delimiter);
+    		} else {
+    			// normal paragraphs -> buffer and wrap
+    			
+    			if (tools.isLineCommentLine(trimmedLine)) {
+    				newIndentation = tools.getIndentationWithComment(lines[index]);
+    				trimmedLine = trimmedLine.substring(1).trim(); // FIXME remove all % signs
+    			} else {
+    				newIndentation = tools.getIndentation(lines[index], tabWidth);
+    			}
+    			if (!indentation.equals(newIndentation)) {
+    				newText.append(wrapper.loadWrapped(indentation));
+    			}
+    			indentation = newIndentation;
+    			wrapper.storeUnwrapped(trimmedLine);
+    			
+    			if (trimmedLine.endsWith("\\\\")
+    					|| trimmedLine.endsWith(".")
+    					|| trimmedLine.endsWith(":")) {
+    				// On forced breaks, end of sentence or enumerations keep existing breaks
+    				newText.append(wrapper.loadWrapped(indentation));
+    			}
+    		}
+    	}
+    	// empty the buffer
+    	newText.append(wrapper.loadWrapped(indentation));
+    	
+    	// put old delims here
+    	newText.delete(newText.length() - delimiter.length(), newText.length());
+    	newText.append(endNewlines);
+    	
+//        selection.getDocument().replace(selection.getTextSelection().getOffset(),
+//                selection.getSelLength(),
+//                newText.toString());
+    	
+    	document.replace(document.getLineOffset(selection.getStartLineIndex()),
+    			selection.getSelLength(),
+    			newText.toString());
     }
-    
+*/    
+	/**
+	 * @author lzx
+	 * 
+	 * @param selection
+	 * @throws BadLocationException
+	 */
+	@SuppressWarnings("unused")
+	private void doWrapC(TexSelections selection) throws BadLocationException 
+	{
+		selection.selectParagraph();
+		
+		String delimiter = tools.getLineDelimiter(selection.getDocument());
+		IDocument document = selection.getDocument();
+		
+		String[] lines = document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()).split(delimiter);
+		if (lines.length == 0)
+			return;
+		
+		StringBuffer newTextBuf = new StringBuffer();
+		
+		int lineNumbers = lines.length;
+		String indentation = tools.getIndentation(lines[0]);
+		boolean end = false;
+		StringBuffer tempBuf = new StringBuffer();
+		boolean isCommentLine = false;
+		boolean isCommentInLine = false;
+		for (int i = 0; i < lineNumbers; i++)
+		{
+			String newLineIndentation = tools.getIndentation(lines[i]);
+			if (i == lineNumbers - 1)
+			{
+				tempBuf.append(lines[i].trim() + ' ');
+				end = true;
+			}
+			if (lines[i].trim().length() == 0)
+			{
+				end = true;
+			}
+			//TODO check the indentation of a comment line
+			else if (!newLineIndentation.equals(indentation))
+			{
+				end = true;
+			}
+			else if (hlwTools.isSingleLine(lines[i]))
+			{
+				end = true;
+			}
+			else if (hlwTools.isCommentInLine(lines[i]))
+			{
+				isCommentInLine = true;
+			}
+			else if (isCommentInLine)
+			{
+				tempBuf.append(lines[i].trim() + ' ');
+				end = true;
+			}
+			else
+			{
+				tempBuf.append(lines[i].trim() + ' ');
+			}
+			
+			if (end)
+			{
+				if (tempBuf.length() == 0)
+				{
+					newTextBuf.append(delimiter);
+					//reset
+					tempBuf = new StringBuffer();
+					tempBuf.append(lines[i]);
+					end = false;
+				}
+				//Delete the ' ' added before
+				tempBuf.deleteCharAt(tempBuf.length() - 1);
+				tempBuf.append(delimiter);
+				tempBuf.insert(0, indentation);
+				
+				//call the function to get the break positions
+				int[] breakpos = hlwTools.getLineBreakPositions(isCommentInLine? tempBuf.substring(0, tempBuf.indexOf("%")) : tempBuf.toString(), MAX_LENGTH);
+				
+				int length = 0;
+				for(int j = breakpos.length - 1; j >= 0; j--)
+				{
+					if (breakpos[j] != 0)
+					{
+						length = j;
+						break;
+					}
+				}
+				for (int j = length; j >= 0; j--)
+				{
+					tempBuf.replace(breakpos[j], breakpos[j] + 1, delimiter + indentation/* + (isCommentLine? "% " : "")*/);
+				}
+				
+				newTextBuf.append(tempBuf);
+				
+				//reset
+				tempBuf = new StringBuffer();
+				tempBuf.append(lines[i].trim());
+				end = false;
+				isCommentInLine = false;
+				indentation = tools.getIndentation(lines[i]);
+				
+			}
+			
+		}
+
+		/*//Delete the ' ' added before
+		tempBuf.deleteCharAt(tempBuf.length() - 1);
+		tempBuf.append(delimiter);
+		tempBuf.insert(0, indentation);
+		
+		//call the function to get the break positions
+		int[] breakpos = hlwTools.getLineBreakPositions(isCommentInLine? tempBuf.substring(0, tempBuf.indexOf("%")) : tempBuf.toString(), MAX_LENGTH);
+		
+		int length = 0;
+		for(int j = breakpos.length - 1; j >= 0; j--)
+		{
+			if (breakpos[j] != 0)
+			{
+				length = j;
+				break;
+			}
+		}
+		for (int j = length; j >= 0; j--)
+		{
+			tempBuf.replace(breakpos[j], breakpos[j] + 1, delimiter + indentation + (isCommentLine? "% " : ""));
+		}
+		
+		newTextBuf.append(tempBuf);*/
+		
+	
+		document.replace(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength(), newTextBuf.toString());
+	}
+	
+	
     private class TextWrapper {
     
         private StringBuffer tempBuf = new StringBuffer();
@@ -336,8 +572,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
         }
         
         private String loadWrapped(String indentation) {
-            String wrapped = tools.wrapWordString(tempBuf.toString(),
-                    indentation, lineLength, delimiter);
+			String wrapped = tools.wrapWordString(tempBuf.toString(), indentation, MAX_LENGTH, delimiter);
             tempBuf = new StringBuffer();
             return wrapped;
         }

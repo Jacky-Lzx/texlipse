@@ -30,8 +30,7 @@ import org.eclipse.texlipse.TexlipsePlugin;
 public class HardLineWrap {
     
     private TexEditorTools tools;
-    private static final Pattern simpleCommandPattern =
-        Pattern.compile("\\\\(\\w+|\\\\)\\s*(\\[.*?\\]\\s*)*(\\{.*?\\}\\s*)*");
+	private static final Pattern simpleCommandPattern = Pattern.compile("\\\\(\\w+|\\\\)\\s*(\\[.*?\\]\\s*)*(\\{.*?\\}\\s*)*");
 
     public HardLineWrap(){
         this.tools = new TexEditorTools();
@@ -665,9 +664,7 @@ public class HardLineWrap {
 					newLineBuf.append(' ' + nextLine.trim());
 					c.length += nextLine.length();
 					if (trimBeginPlusComment(nextLine).indexOf("%") > 0)
-					{
 						break;
-					}
 					nextLine = tools.getStringAt(d, c, false, lineDif);
 				}
 			}
@@ -684,15 +681,14 @@ public class HardLineWrap {
 				}
 			}
 			for (int i = length; i >= 0; i--)
-			{
 				newLineBuf.replace(breakpos[i], breakpos[i] + 1, delim + tools.getIndentation(line) + (isCommentLine? "% " : ""));
-			}
 			
-			
+//			newLineBuf.append(delim);
 			if (!isLastLine)
 			{
 				c.length += delim.length() * lineDif;
 				c.length -= 2;
+				if (nextLine.length() == 0) c.length += 1;
 			}
 			
 			if (cursorOnLine >= breakpos[0])

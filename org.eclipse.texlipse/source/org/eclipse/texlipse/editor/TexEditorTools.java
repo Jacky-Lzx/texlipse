@@ -426,7 +426,7 @@ public class TexEditorTools {
 	
 	
 	/**
-	 * Checks if the target txt is a comment line
+	 * Checks if the target text is a comment line
 	 * @param text 	source text
 	 * @return 		<code>true</code> if line starts with %-character, 
 	 * 				<code>false</code> otherwise
@@ -523,6 +523,7 @@ public class TexEditorTools {
         }
         return indentation.toString();
     }
+    
     
     public String wrapWordString(String input, String indent, int width, String delim) {
         String[] words = input.split("\\s");

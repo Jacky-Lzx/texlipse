@@ -78,6 +78,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 //        this.tabWidth = TexlipsePlugin.getDefault().getPreferenceStore().getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
         TexSelections selection = new TexSelections(getTexEditor());
         try {
+            doWrap(selection);
         } catch(BadLocationException e) {
             TexlipsePlugin.log("TexCorrectIndentationAction.run", e);
         }

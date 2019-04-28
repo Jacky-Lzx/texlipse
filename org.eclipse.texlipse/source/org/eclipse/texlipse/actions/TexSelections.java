@@ -133,40 +133,46 @@ public class TexSelections {
      * Selects a paragraph if nothing was selected or if something was then
      * selects complete lines (for HardWrapAction)
      */
-    public void selectParagraph() {
-    	if (textSelection.getLength() == 0) {
-    		try {
-    			int offset = textSelection.getOffset();
-    			String doc = document.get();
+	public void selectParagraph()
+	{
+		if (textSelection.getLength() == 0)
+		{
+			try
+			{
+				int offset = textSelection.getOffset();
+				String doc = document.get();
 
-    			Pattern p = Pattern.compile("(?m)"
-    					+ Pattern.quote(endLineDelim) + "\\p{Blank}*"
-    					+ Pattern.quote(endLineDelim));
-    			Matcher m = p.matcher(doc);
+				Pattern p = Pattern.compile("(?m)" + Pattern.quote(endLineDelim) + "\\p{Blank}*" + Pattern.quote(endLineDelim));
+				Matcher m = p.matcher(doc);
 
-    			m.region(0, offset);
-    			int paraBegin = 0;
-    			// find last match before the paragraph
-    			while (m.find()) paraBegin = m.end();
+				m.region(0, offset);
+				int paraBegin = 0;
+				// find last match before the paragraph
+				while (m.find())
+					paraBegin = m.end();
 
-    			startLineIndex = document.getLineOfOffset(paraBegin);
+				startLineIndex = document.getLineOfOffset(paraBegin);
 
-    			// Find first match after the paragraph
-    			m.region(offset, doc.length());
-    			int paraEnd;
-    			if (m.find()) paraEnd = m.start();
-    			else paraEnd = doc.length();
+				// Find first match after the paragraph
+				m.region(offset, doc.length());
+				int paraEnd;
+				if (m.find())
+					paraEnd = m.start();
+				else
+					paraEnd = doc.length();
 
-    			endLineIndex = document.getLineOfOffset(paraEnd);
+				endLineIndex = document.getLineOfOffset(paraEnd);
 
-    			selLength = paraEnd - paraBegin;
-    		} catch (BadLocationException ble) {
-    			throw new RuntimeException(ble);
-    		}
-    	} else {
-    		selectCompleteLines();
-    	}
-    }
+				selLength = paraEnd - paraBegin;
+			} 
+			catch (BadLocationException ble)
+			{
+				throw new RuntimeException(ble);
+			}
+		} 
+		else
+			selectCompleteLines();
+	}
 
     /**
      * Gets line from the document.

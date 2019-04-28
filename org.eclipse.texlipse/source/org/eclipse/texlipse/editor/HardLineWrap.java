@@ -30,8 +30,7 @@ import org.eclipse.texlipse.TexlipsePlugin;
 public class HardLineWrap {
     
     private TexEditorTools tools;
-    private static final Pattern simpleCommandPattern =
-        Pattern.compile("\\\\(\\w+|\\\\)\\s*(\\[.*?\\]\\s*)*(\\{.*?\\}\\s*)*");
+	private static final Pattern simpleCommandPattern = Pattern.compile("\\\\(\\w+|\\\\)\\s*(\\[.*?\\]\\s*)*(\\{.*?\\}\\s*)*");
 
     public HardLineWrap(){
         this.tools = new TexEditorTools();
@@ -102,15 +101,23 @@ public class HardLineWrap {
      * @param line
      * @return
      */
-    private static boolean isSingleLine(String line) {
-        if (trimBegin(line).startsWith("%")) return true;
-        if ((trimBegin(line).startsWith("\\"))) return true; // e.g. \\ or \[
-        if (trimBegin(line).startsWith("\\item")) return true;
-        if (trimBegin(line).length() == 0) return true;
-        Matcher m = simpleCommandPattern.matcher(line);
-        if (m.matches()) return true;
-        return false;
-    }
+	private static boolean isSingleLine(String line)
+	{
+		String trimmedLine = trimBegin(line);
+		if (trimmedLine.startsWith("%"))
+			return true;
+		// The line starts with "\%" is not a sigle line
+		if (trimmedLine.startsWith("\\") && !trimmedLine.startsWith("\\%"))
+			return true; // e.g. \\ or \[ 
+		if (trimmedLine.startsWith("\\item"))
+			return true;
+		if (trimmedLine.length() == 0)
+			return true;
+		Matcher m = simpleCommandPattern.matcher(line);
+		if (m.matches())
+			return true;
+		return false;
+	}
     
     /**
      * Finds the best position in the given String to make a line break
@@ -148,175 +155,20 @@ public class HardLineWrap {
      * Normally it adds the rest of the currentline to the next line. 
      * Exceptions are empty lines, commandlines, commentlines, and special lines like \\ or \[.
      * 
-     * @param d             IDocument
-     * @param c             DocumentCommand
+     * @param d             
+     * @param c             The text that will inserted into the document later on
      * @param MAX_LENGTH    How many characters are allowed at one line.
-     */
-    /*public void doWrapB(IDocument d, DocumentCommand c, int MAX_LENGTH) {
-        try {
-            // Get the line of the command excluding delimiter
-            IRegion commandRegion = d.getLineInformationOfOffset(c.offset);
-            
-            // Ignore texts with line endings and needn't to be wrapped
-			if (c.text.indexOf("\n") >= 0 || c.text.indexOf("\r") >= 0 || commandRegion.getLength() + c.text.length() <= MAX_LENGTH)
-				return;
-            
-            String line = d.get(commandRegion.getOffset(), commandRegion.getLength());
-//            System.out.println(line);
-            int lineNr = d.getLineOfOffset(c.offset);
-            final int cursorOnLine = c.offset - commandRegion.getOffset();
-            
-            //Create the newLine, we rewrite the whole currentline
-            StringBuffer newLineBuf = new StringBuffer();
-            
-            newLineBuf.append(line.substring(0, cursorOnLine));
-            newLineBuf.append(c.text);
-            newLineBuf.append(trimEnd(line.substring(cursorOnLine)));
-            
-            //Special case if there are white spaces at the end of the line
-            if (trimEnd(newLineBuf.toString()).length() <= MAX_LENGTH) return;
-            
-
-			String delim = d.getLineDelimiter(lineNr);
-			boolean isLastLine = false;
-			if (delim == null)
-			{
-				// This is the last line in the document
-				isLastLine = true;
-				if (lineNr > 0)
-					delim = d.getLineDelimiter(lineNr - 1);
-				else
-				{
-					// Last chance
-					delim = d.getLegalLineDelimiters()[0];
-				}
-			}
-            String indent = tools.getIndentationWithComment(line);
-
-            int length = line.length();
-
-            String nextline = tools.getStringAt(d, c, false, 1);
-            String nextTrimLine = nextline.trim(); 
-            boolean isWithNextline = false;
-            
-            // Figure out whether the next line should be merged with the wrapped text
-            
-            // 1st case: wrapped text ends with . or : or \\
-			if (line.trim().endsWith(".") || line.trim().endsWith(":") || line.trim().endsWith("\\\\"))
-			{
-				newLineBuf.append(delim); // do not merge
-			} 
-			else
-			{
-				// 2nd case: merge comment lines
-				if (tools.getIndexOfComment(line) >= 0 // wrapped text contains a comment,
-					&& tools.isLineCommentLine(nextTrimLine) // next line is also a comment line,
-					&& tools.getIndentation(line).equals(tools.getIndentation(nextline)) // with the same indentation!
-					&& !isSingleLine(trimBeginPlusComment(nextTrimLine))) // but not an empty comment line, commented command line, etc.
-				{
-					// merge!
-					newLineBuf.append(' ');
-					newLineBuf.append(trimBeginPlusComment(nextline));
-					length += nextline.length();
-					isWithNextline = true;
-				} 
-				// 3th case: Wrapped text is comment, next line is not (otherwise case 2)
-				else if (tools.getIndexOfComment(line) >= 0)
-				{
-					newLineBuf.append(delim);
-				} 
-				// 4rd case: Next line is a comment/command
-				else if (isSingleLine(nextTrimLine))
-				{
-					newLineBuf.append(delim);
-				} 
-				// all other cases
-				else
-				{
-					// merge: Add the whole next line
-					newLineBuf.append(' ');
-					newLineBuf.append(trimBegin(nextline));
-					length += nextline.length();
-					isWithNextline = true;
-				}
-			}
-
-            // TODO: if line has a comment at the end, this might be wrapped onto a non-comment line
-            // TODO: newLine might need wrapping as well if too long
-            
-            if (!isLastLine) length += delim.length(); //delim.length();
-            String newLine = newLineBuf.toString();
-
-            int breakpos = getLineBreakPosition(newLine, MAX_LENGTH);
-            if (breakpos < 0) return;
-
-            c.length = length;
-            
-            c.shiftsCaret = false;
-            c.caretOffset = c.offset + c.text.length() + indent.length();
-            if (breakpos >= cursorOnLine + c.text.length()){ 
-                c.caretOffset -= indent.length();
-            }
-            if (breakpos < cursorOnLine + c.text.length()){
-                //Line delimiter - one white space
-                c.caretOffset += delim.length() - 1;
-            }
-
-            c.offset = commandRegion.getOffset();
-
-            StringBuffer buf = new StringBuffer();
-            buf.append(newLine.substring(0, breakpos));
-            buf.append(delim);
-            buf.append(indent);
-            // Are we wrapping a comment onto the next line without its %?
-            if (tools.getIndexOfComment(newLine.substring(0,breakpos)) >= 0 && tools.getIndexOfComment(indent) == -1)
-                buf.append("% ");
-            buf.append(trimBegin(newLine.substring(breakpos)));
-            
-            //Remove unnecessary characters from buf
-            int i=0;
-            while (i < line.length() && line.charAt(i) == buf.charAt(i)) {
-                i++;
-            }
-            buf.delete(0, i);
-            c.offset += i;
-            c.length -= i;
-            if (isWithNextline) {
-                i=0;
-                while (i < nextline.length() && 
-                        nextline.charAt(nextline.length() - i - 1) == buf.charAt(buf.length() - i - 1)) {
-                    i++;
-                }
-                buf.delete(buf.length() - i, buf.length());
-                c.length -= i;
-            }
-            
-            c.text = buf.toString();
-            
-        } catch(BadLocationException e) {
-            TexlipsePlugin.log("Problem with hard line wrap", e);
-       }
-    }
-    */
-    /**
+     * 
+     * @add lzx
      * Every time user types a char, the function will be called.
      * 
      * Done: Delete the case of comment line: no normal one will use comment in a line. If so, don't wrap it.
-     * TODO: Line does not merge with the next comment line.
-     * TODO: Comment line wraps. 
-     * TODO: Newline might need wrapping as well if too long
-     * 
-     * @param d
-     * @param c The text that will inserted into the document later on
-     * @param MAX_LENGTH
-     * @author lzx
+     * Done: Line does not merge with the next comment line.
+     * Done: Comment line wraps. 
+     * Done: Newline might need wrapping as well if too long
      */
 	/*public void doWrapB(IDocument d, DocumentCommand c, int MAX_LENGTH)
 	{
-		*//**
-		 * Questions:
-		 *  1. How does it delete the delimiter at the end of the current line?
-		 *//*
 		*//**
 		 * Notes:
 		 * 	1. c.caretOffset: The location of the cursor. e.g. If inputing a 'e', the caret will be right after 'e', i.e. "e^".
@@ -498,95 +350,12 @@ public class HardLineWrap {
 		}
 	}*/
 	
-	/*public void doWrapC(IDocument d, DocumentCommand c, int MAX_LENGTH)
-	{
-		try
-		{
-			IRegion commandRegion = d.getLineInformationOfOffset(c.offset);
-			String line = d.get(commandRegion.getOffset(), commandRegion.getLength());
-			int lineNumber = d.getLineOfOffset(c.offset);
-			final int cursorOnLine = c.offset - commandRegion.getOffset();
-			
-			if (c.text.indexOf("\n") >= 0 || c.text.indexOf("\r") >= 0 || commandRegion.getLength() + c.text.length() <= MAX_LENGTH) return;
-			if (tools.getIndexOfComment(tools.trimBegin(line)) > 0 && tools.getIndexOfComment(tools.trimBegin(line)) < MAX_LENGTH) return;
-			if (c.text == " ") return;
-			
-			//set the location of cursor
-			c.shiftsCaret = false;
-			c.caretOffset = c.offset + c.text.length();
-			
-			StringBuffer newLineBuf = new StringBuffer();
-			
-			newLineBuf.append(line.substring(0, cursorOnLine));
-			newLineBuf.append(c.text);
-			newLineBuf.append(trimEnd(line.substring(cursorOnLine)));
-
-			String delim = "\n";
-			
-//			Don't count the length of c.text
-//			int length = line.length();
-			
-			boolean isWithNextLine = false;
-			boolean isLastLine = false;
-			
-			//TODO check if with next line
-			String nextLine = tools.getStringAt(d, c, false, 1);
-//			String nextTrimLine = nextLine.trim();
-			
-			if ((nextLine == ""))
-			{
-				isLastLine = true;
-			}
-			else
-			{
-				if (!isSingleLine(nextLine))
-				{
-					//merge
-					isWithNextLine = true;
-				}
-				if (trimBegin(nextLine).startsWith("%") && trimBegin(line).startsWith("%"))
-				{
-					isWithNextLine = true;
-				}
-			}
-			
-			
-			int breakpos = getLineBreakPosition(newLineBuf.toString(), MAX_LENGTH);
-			//Does it happen?
-			if(breakpos < 0) return;
-			
-			
-			c.length = commandRegion.getLength() + 1;
-			c.offset = commandRegion.getOffset();
-			if (!isWithNextLine)
-			{
-				newLineBuf.append(delim);
-				
-				if (isLastLine) c.length -= 1;
-			}
-			else
-			{
-				newLineBuf.append(' ' + tools.trimBegin(nextLine));
-				
-				c.length += d.getLineInformation(lineNumber + 1).getLength();
-			}
-			newLineBuf.replace(breakpos, breakpos + 1, delim + (trimBegin(line).startsWith("%") ? '%' : "") + tools.getIndentation(line));
-			if (cursorOnLine >= breakpos)
-				c.caretOffset += tools.getIndentation(line).length();
-			c.text = newLineBuf.toString();
-			
-		}
-		catch(BadLocationException e)
-		{
-			System.out.println("Error");
-			TexlipsePlugin.log("Problem with hard line wrap", e);
-		}
-	}
-	*/
 	/**
 	 *  After entering a char in the text, wrap the current paragraph and rewrite 
 	 *  <code>c</code> to execute the change by the eclipse later.
 	 * 
+	 * Done: correct wrap with "\%"
+	 * Done: when in-text comment was accidentally wrapped to next line, it will be treated as comment line
 	 * @param d
 	 * @param c
 	 * @param MAX_LENGTH
@@ -610,6 +379,11 @@ public class HardLineWrap {
 			if (tools.getIndexOfComment(tools.trimBegin(line)) > 0 && tools.getIndexOfComment(tools.trimBegin(line)) < MAX_LENGTH)
 				return;
 
+			/**
+			 * @bug
+			 * There is a bug that when copy a long paragraph into the document and then input char, the cursor offset is not correct.
+			 * <p>But the first thing after copying should be force hard line(Esc, q), so this bug needn't be solved.
+			 */
 			//set the location of cursor after merge
 			c.shiftsCaret = false;
 			c.caretOffset = c.offset + c.text.length();
@@ -623,7 +397,7 @@ public class HardLineWrap {
 
 			
 			int lineNr = d.getLineOfOffset(c.offset);
-			//For windows the delimiter is '\n'
+			
 			String delim = d.getLineDelimiter(lineNr);
 			boolean isLastLine = false;
 			if (delim == null)
@@ -664,12 +438,14 @@ public class HardLineWrap {
 					lineDif++;
 					newLineBuf.append(' ' + nextLine.trim());
 					c.length += nextLine.length();
+					if (getCommentCharPosition(nextLine) > 0)
+						break;
 					nextLine = tools.getStringAt(d, c, false, lineDif);
 				}
 			}
 			
-			boolean isCommentInLine = trimBeginPlusComment(tools.getStringAt(d, c, false, lineDif - 1)).indexOf("%") > 0;
-			int[] breakpos = getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, newLineBuf.indexOf("%")) : newLineBuf.toString(), MAX_LENGTH);
+			boolean isCommentInLine = getCommentCharPosition(newLineBuf.toString()) > 0;
+			int[] breakpos = getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
 			int length = 0;
 			for(int i = breakpos.length - 1; i >= 0; i--)
 			{
@@ -680,15 +456,13 @@ public class HardLineWrap {
 				}
 			}
 			for (int i = length; i >= 0; i--)
-			{
 				newLineBuf.replace(breakpos[i], breakpos[i] + 1, delim + tools.getIndentation(line) + (isCommentLine? "% " : ""));
-			}
-			
 			
 			if (!isLastLine)
 			{
 				c.length += delim.length() * lineDif;
 				c.length -= 2;
+				if (nextLine.length() == 0) c.length += 1;
 			}
 			
 			if (cursorOnLine >= breakpos[0])
@@ -725,6 +499,27 @@ public class HardLineWrap {
 			breakPositions[i] = breakPositions[i - 1] + pos + 1;
 		}
 		return breakPositions;
+	}
+	
+	/**
+	 * It is supposed that input string only has one in-text comment.
+	 * Otherwise it returns the first '%' ("\%" exclusive) index.
+	 * 
+	 * @param str
+	 * @return index of single '%' ("\%" exclusive)
+	 * 
+	 * @author lzx
+	 */
+	private static int getCommentCharPosition(String str)
+	{
+		char[] ar = str.toCharArray();
+		int length = ar.length;
+		for (int i = 1; i < length; i++)
+		{
+			if(ar[i] == '%' && ar[i - 1] != '\\')
+				return i;
+		}
+		return -1;
 	}
     
  }

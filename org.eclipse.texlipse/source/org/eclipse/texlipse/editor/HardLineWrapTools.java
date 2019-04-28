@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class HardLineWrapTools
 {
 	private static final Pattern simpleCommandPattern = Pattern.compile("\\\\(\\w+|\\\\)\\s*(\\[.*?\\]\\s*)*(\\{.*?\\}\\s*)*");
-
+	
 	public HardLineWrapTools()
 	{
 		
@@ -156,9 +156,35 @@ public class HardLineWrapTools
 		return trimBegin(str).startsWith("%");
 	}
 	
+	
 	public boolean isCommentInLine(String str)
 	{
-		return trimBeginPlusComment(str).indexOf('%') > 0;
+		return this.getCommentCharPosition(str) > 0;
 	}
+	
+	/**
+	 * TODO: merge it with the one in HardLineWrap.java
+	 * It is supposed that input string only has one in-text comment.
+	 * Otherwise it returns the first '%' ("\%" exclusive) index.
+	 * 
+	 * @param str
+	 * @return index of single '%' ("\%" exclusive)
+	 * 
+	 * @author lzx
+	 */
+	public int getCommentCharPosition(String str)
+	{
+		char[] ar = str.toCharArray();
+		int length = ar.length;
+		for (int i = 1; i < length; i++)
+		{
+			if(ar[i] == '%' && ar[i - 1] != '\\')
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	
 }

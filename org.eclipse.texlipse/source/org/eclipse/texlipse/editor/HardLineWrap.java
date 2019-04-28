@@ -517,9 +517,7 @@ public class HardLineWrap {
 		for (int i = 1; i < length; i++)
 		{
 			if(ar[i] == '%' && ar[i - 1] != '\\')
-			{
 				return i;
-			}
 		}
 		return -1;
 	}

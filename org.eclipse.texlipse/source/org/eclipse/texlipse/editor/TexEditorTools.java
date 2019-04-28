@@ -34,8 +34,7 @@ public class TexEditorTools {
     /**
      * Matches some simple LaTeX -commands
      */
-    private static final Pattern simpleCommandPattern =
-        Pattern.compile("\\\\([a-zA-Z]+)\\s*\\{(.*?)\\}\\s*");
+	private static final Pattern simpleCommandPattern = Pattern.compile("\\\\([a-zA-Z]+)\\s*\\{(.*?)\\}\\s*");
     
     public TexEditorTools() {
     }
@@ -87,25 +86,42 @@ public class TexEditorTools {
 	 * @param text 		source where to find the indentation
 	 * @param tabWidth 	how many spaces one tabular character is
 	 * @return 			the indentation of the line
+	 * @edited lzx
 	 */
-	public String getIndentation(String text, int tabWidth) {
-		String indentation = "";
+	public String getIndentation(String text, int tabWidth) 
+	{
+		StringBuffer indentation = new StringBuffer();
 		char[] array = text.toCharArray();
 		
 		if (array.length == 0){
-			return indentation;
+			return "";
 		}
-		
-		if (array[0] == ' ' || array[0] == '\t'){
+		int length = array.length;
+		for (int i = 0; i < length; i++)
+		{
+			if (array[i] == ' ')
+				indentation.append(' ');
+			else if (array[i] == '\t')
+			{
+				for (int j = 1; j <= tabWidth; j++)
+				{
+					indentation.append(' ');
+				}
+			}
+			else
+				break;
+		}
+			
+		/*if (array[0] == ' ' || array[0] == '\t'){
 			int tabs = numberOfTabs(text);		
-			int spaces = numberOfSpaces(text) /*- tabs*/ + (tabs * tabWidth);
+			int spaces = numberOfSpaces(text) - tabs + (tabs * tabWidth);
 			if (spaces > 0) {
 				for (int i = 0; i < spaces; i++) {
 					indentation += " ";
 				}
 			}
-		}
-		return indentation;
+		}*/
+		return indentation.toString();
 	}
 	
 	/**
@@ -561,7 +577,17 @@ public class TexEditorTools {
         return new String[] {"", ""};
     }
 
-    public String getNewlinesAtEnd(String text, String delim) {
+    /**
+     * e.g. if <code>text = "This is an example\r\n\r\n\r\n"</code> and <code>delimiter = "\r\n"</code>,
+     * it will return <code>"\r\n\r\n\r\n"</code>
+     * 
+     * @param text
+     * @param delim
+     * @return new lines at the end of the <code> text </code> (including current line's delimiter)
+     * 
+     * @AddExplanation lzx
+     */
+    public String getEmptylinesAtEnd(String text, String delim) {
         StringBuffer sb = new StringBuffer();
         for (int i = text.length() - delim.length(); i >= 0; i -= delim.length()) {
             if (text.regionMatches(i, delim, 0, delim.length())) {

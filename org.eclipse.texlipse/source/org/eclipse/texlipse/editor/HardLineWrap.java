@@ -346,6 +346,7 @@ public class HardLineWrap {
 	 *  After entering a char in the text, wrap the current paragraph and rewrite 
 	 *  <code>c</code> to execute the change by the eclipse later.
 	 * 
+	 * TODO correct wrap with "\%"
 	 * @param d
 	 * @param c
 	 * @param MAX_LENGTH

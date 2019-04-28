@@ -397,7 +397,7 @@ public class HardLineWrap {
 
 			
 			int lineNr = d.getLineOfOffset(c.offset);
-			//For windows the delimiter is '\n'
+			
 			String delim = d.getLineDelimiter(lineNr);
 			boolean isLastLine = false;
 			if (delim == null)
@@ -458,7 +458,6 @@ public class HardLineWrap {
 			for (int i = length; i >= 0; i--)
 				newLineBuf.replace(breakpos[i], breakpos[i] + 1, delim + tools.getIndentation(line) + (isCommentLine? "% " : ""));
 			
-//			newLineBuf.append(delim);
 			if (!isLastLine)
 			{
 				c.length += delim.length() * lineDif;
@@ -506,9 +505,10 @@ public class HardLineWrap {
 	 * It is supposed that input string only has one in-text comment.
 	 * Otherwise it returns the first '%' ("\%" exclusive) index.
 	 * 
-	 * @author lzx
 	 * @param str
 	 * @return index of single '%' ("\%" exclusive)
+	 * 
+	 * @author lzx
 	 */
 	private static int getCommentCharPosition(String str)
 	{

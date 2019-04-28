@@ -502,6 +502,14 @@ public class HardLineWrap {
 		return breakPositions;
 	}
 	
+	/**
+	 * It is supposed that input string only has one in-text comment.
+	 * Otherwise it returns the first '%' ("\%" exclusive) index.
+	 * 
+	 * @author lzx
+	 * @param str
+	 * @return index of single '%' ("\%" exclusive)
+	 */
 	private static int getCommentCharPosition(String str)
 	{
 		char[] ar = str.toCharArray();

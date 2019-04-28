@@ -101,15 +101,23 @@ public class HardLineWrap {
      * @param line
      * @return
      */
-    private static boolean isSingleLine(String line) {
-        if (trimBegin(line).startsWith("%")) return true;
-        if ((trimBegin(line).startsWith("\\"))) return true; // e.g. \\ or \[
-        if (trimBegin(line).startsWith("\\item")) return true;
-        if (trimBegin(line).length() == 0) return true;
-        Matcher m = simpleCommandPattern.matcher(line);
-        if (m.matches()) return true;
-        return false;
-    }
+	private static boolean isSingleLine(String line)
+	{
+		String trimmedLine = trimBegin(line);
+		if (trimmedLine.startsWith("%"))
+			return true;
+		// The line starts with "\%" is not a sigle line
+		if (trimmedLine.startsWith("\\") && !trimmedLine.startsWith("\\%"))
+			return true; // e.g. \\ or \[ 
+		if (trimmedLine.startsWith("\\item"))
+			return true;
+		if (trimmedLine.length() == 0)
+			return true;
+		Matcher m = simpleCommandPattern.matcher(line);
+		if (m.matches())
+			return true;
+		return false;
+	}
     
     /**
      * Finds the best position in the given String to make a line break
@@ -346,7 +354,8 @@ public class HardLineWrap {
 	 *  After entering a char in the text, wrap the current paragraph and rewrite 
 	 *  <code>c</code> to execute the change by the eclipse later.
 	 * 
-	 * TODO correct wrap with "\%"
+	 * Done: correct wrap with "\%"
+	 * Done: when in-text comment was accidentally wrapped to next line, it will be treated as comment line
 	 * @param d
 	 * @param c
 	 * @param MAX_LENGTH
@@ -429,14 +438,14 @@ public class HardLineWrap {
 					lineDif++;
 					newLineBuf.append(' ' + nextLine.trim());
 					c.length += nextLine.length();
-					if (trimBeginPlusComment(nextLine).indexOf("%") > 0)
+					if (getCommentCharPosition(nextLine) > 0)
 						break;
 					nextLine = tools.getStringAt(d, c, false, lineDif);
 				}
 			}
 			
-			boolean isCommentInLine = trimBeginPlusComment(tools.getStringAt(d, c, false, lineDif - 1)).indexOf("%") > 0;
-			int[] breakpos = getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, newLineBuf.indexOf("%")) : newLineBuf.toString(), MAX_LENGTH);
+			boolean isCommentInLine = getCommentCharPosition(newLineBuf.toString()) > 0;
+			int[] breakpos = getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
 			int length = 0;
 			for(int i = breakpos.length - 1; i >= 0; i--)
 			{
@@ -491,6 +500,20 @@ public class HardLineWrap {
 			breakPositions[i] = breakPositions[i - 1] + pos + 1;
 		}
 		return breakPositions;
+	}
+	
+	private static int getCommentCharPosition(String str)
+	{
+		char[] ar = str.toCharArray();
+		int length = ar.length;
+		for (int i = 1; i < length; i++)
+		{
+			if(ar[i] == '%' && ar[i - 1] != '\\')
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
     
  }
